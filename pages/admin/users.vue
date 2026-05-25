@@ -28,7 +28,7 @@
     </el-card>
 
     <el-card class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe>
+      <el-table v-loading="loading" :data="tableData" stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="avatar" label="头像" width="80">
           <template #default="{ row }">
@@ -40,10 +40,7 @@
         <el-table-column prop="email" label="邮箱" width="180" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag
-              :type="row.status === 'active' ? 'success' : 'danger'"
-              size="small"
-            >
+            <el-tag :type="row.status === 'active' ? 'success' : 'danger'" size="small">
               {{ row.status === 'active' ? '正常' : '已禁用' }}
             </el-tag>
           </template>
@@ -62,14 +59,7 @@
             >
               禁用
             </el-button>
-            <el-button
-              v-else
-              link
-              type="success"
-              @click="handleEnable(row)"
-            >
-              解禁
-            </el-button>
+            <el-button v-else link type="success" @click="handleEnable(row)"> 解禁 </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -149,7 +139,9 @@ const generateMockData = () => {
       postsCount: Math.floor(Math.random() * 100),
       followersCount: Math.floor(Math.random() * 500),
       createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-        .toISOString().slice(0, 19).replace('T', ' ')
+        .toISOString()
+        .slice(0, 19)
+        .replace('T', ' ')
     })
   }
   return data

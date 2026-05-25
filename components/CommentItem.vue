@@ -1,20 +1,20 @@
 <template>
   <div class="comment-item">
-    <NuxtLink :to="`/user/${comment.user.id}`" class="avatar-link">
-      <el-avatar :src="comment.user.avatar" size="40" />
+    <NuxtLink :to="`/user/${comment.user?.id}`" class="avatar-link">
+      <el-avatar :src="comment.user?.avatar" size="40" />
     </NuxtLink>
     <div class="comment-content">
       <div class="comment-header">
-        <NuxtLink :to="`/user/${comment.user.id}`" class="nickname">
-          {{ comment.user.nickname }}
+        <NuxtLink :to="`/user/${comment.user?.id}`" class="nickname">
+          {{ comment.user?.nickname || '匿名用户' }}
         </NuxtLink>
         <span v-if="comment.replyTo" class="reply-to">
           回复
-          <NuxtLink :to="`/user/${comment.replyTo.id}`" class="reply-nickname">
-            @{{ comment.replyTo.nickname }}
+          <NuxtLink :to="`/user/${comment.replyTo?.id}`" class="reply-nickname">
+            @{{ comment.replyTo?.nickname }}
           </NuxtLink>
         </span>
-        <span class="time">{{ formatTime(comment.createdAt) }}</span>
+        <span class="time">{{ comment.createdAt ? formatTime(comment.createdAt) : '' }}</span>
       </div>
       <div class="comment-text">{{ comment.content }}</div>
       <div class="comment-actions">
@@ -24,7 +24,7 @@
           @click="handleLike"
         >
           <el-icon><thumb-up /></el-icon>
-          <span>{{ formatNumber(comment.likesCount) }}</span>
+          <span>{{ comment.likesCount ? formatNumber(comment.likesCount) : 0 }}</span>
         </button>
         <button class="action-btn" @click="handleReply">
           <el-icon><chat-dot-rounded /></el-icon>
@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Comment } from '~/api/post'
+import type { Comment } from '~/types'
 import { useUserStore } from '~/stores/user'
 import { formatTime, formatNumber } from '~/utils'
 import { StarFilled, ChatRound, Delete } from '@element-plus/icons-vue'

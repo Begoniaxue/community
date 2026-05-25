@@ -70,7 +70,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '~/stores/user'
 import {
   DataAnalysis,
   Document,
@@ -80,6 +79,7 @@ import {
   List,
   ArrowDown
 } from '@element-plus/icons-vue'
+import { useUserStore } from '~/stores/user'
 
 const route = useRoute()
 const router = useRouter()

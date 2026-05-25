@@ -22,18 +22,10 @@
           </div>
         </div>
         <div class="profile-actions">
-          <el-button
-            v-if="isOwnProfile"
-            type="primary"
-            @click="navigateToSettings"
-          >
+          <el-button v-if="isOwnProfile" type="primary" @click="navigateToSettings">
             编辑资料
           </el-button>
-          <el-button
-            v-else
-            :type="isFollowing ? 'info' : 'primary'"
-            @click="handleFollow"
-          >
+          <el-button v-else :type="isFollowing ? 'info' : 'primary'" @click="handleFollow">
             {{ isFollowing ? '已关注' : '关注' }}
           </el-button>
         </div>
@@ -64,10 +56,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import type { Post } from '~/api/post'
+import type { Post, User } from '~/types'
 import { postApi } from '~/api/post'
 import { userApi } from '~/api/user'
-import type { User } from '~/stores/user'
 import { useUserStore } from '~/stores/user'
 
 const router = useRouter()
@@ -79,12 +70,28 @@ const userPosts = ref<Post[]>([])
 const postsLoading = ref(false)
 const isFollowing = ref(false)
 
-const userId = computed(() => route.params.id as string)
+const userId = computed(() => {
+  const id = Number(route.params.id)
+  return isNaN(id) ? 0 : id
+})
 const isOwnProfile = computed(() => userStore.user?.id === userId.value)
+const isValidUserId = computed(() => userId.value > 0)
+
+const extractArray = <T>(data: any): T[] => {
+  if (Array.isArray(data)) return data
+  if (data?.records && Array.isArray(data.records)) return data.records
+  if (data?.list && Array.isArray(data.list)) return data.list
+  return []
+}
 
 const fetchUserProfile = async () => {
+  if (!isValidUserId.value) {
+    router.push('/404')
+    return
+  }
   try {
     const response = await userApi.getUserById(userId.value)
+    console.log('[用户详情] fetchUserProfile 返回:', JSON.stringify(response, null, 2))
     profileUser.value = response.data || null
   } catch (error) {
     console.error('获取用户信息失败:', error)
@@ -92,10 +99,12 @@ const fetchUserProfile = async () => {
 }
 
 const fetchUserPosts = async () => {
+  if (!isValidUserId.value) return
   postsLoading.value = true
   try {
-    const response = await postApi.getList({ page: 1, pageSize: 20 })
-    userPosts.value = response.data?.list || []
+    const response = await postApi.getList({ page: 1, pageSize: 20, categoryId: undefined, keyword: undefined })
+    console.log('[用户详情] fetchUserPosts 返回:', JSON.stringify(response, null, 2))
+    userPosts.value = extractArray<Post>(response.data)
   } catch (error) {
     console.error('获取用户帖子失败:', error)
   } finally {

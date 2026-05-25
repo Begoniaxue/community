@@ -1,30 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-
-export interface User {
-  id: string
-  username: string
-  nickname: string
-  avatar: string
-  email: string
-  phone: string
-  bio: string
-  gender: 'male' | 'female' | 'unknown'
-  birthday: string
-  location: string
-  followersCount: number
-  followingCount: number
-  postsCount: number
-  isAdmin: boolean
-  isBanned: boolean
-  createdAt: string
-  updatedAt: string
-}
+import type { User } from '~/types'
+import { userApi } from '~/api/user'
 
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
   const token = ref<string>('')
   const isLoggedIn = computed(() => !!token.value)
+  const isLoading = ref(false)
 
   const setUser = (userData: User) => {
     user.value = userData
@@ -51,11 +34,27 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  const initAuth = () => {
+  const fetchUserInfo = async () => {
+    if (!token.value) return
+    isLoading.value = true
+    try {
+      const response = await userApi.getUserInfo()
+      if (response.data) {
+        user.value = response.data
+      }
+    } catch (error) {
+      console.error('获取用户信息失败:', error)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const initAuth = async () => {
     if (typeof window !== 'undefined') {
       const savedToken = localStorage.getItem('community_token')
       if (savedToken) {
         token.value = savedToken
+        await fetchUserInfo()
       }
     }
   }
@@ -64,10 +63,12 @@ export const useUserStore = defineStore('user', () => {
     user,
     token,
     isLoggedIn,
+    isLoading,
     setUser,
     setToken,
     updateUser,
     logout,
+    fetchUserInfo,
     initAuth
   }
 })

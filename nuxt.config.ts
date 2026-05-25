@@ -1,12 +1,9 @@
 export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@element-plus/nuxt'],
-  devtools: { 
+  devtools: {
     enabled: true
   },
-  css: [
-    '~/assets/styles/global.scss',
-    'vant/lib/index.css'
-  ],
+  css: ['~/assets/styles/global.scss', 'vant/lib/index.css'],
   elementPlus: {
     importStyle: 'css',
     themes: ['dark']
@@ -43,9 +40,9 @@ export default defineNuxtConfig({
     }
   },
   runtimeConfig: {
+    backendApiUrl: process.env.BACKEND_API_URL || 'http://localhost:8080/api',
     public: {
-      apiBase: process.env.API_BASE_URL || 'http://localhost:3001/api',
-      wsUrl: process.env.WS_URL || 'ws://localhost:3001/ws'
+      wsUrl: process.env.NUXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws'
     }
   }
 })

@@ -16,12 +16,7 @@
             />
           </el-form-item>
           <el-form-item>
-            <el-button
-              type="primary"
-              @click="handleLogin"
-              :loading="loading"
-              style="width: 100%"
-            >
+            <el-button type="primary" :loading="loading" style="width: 100%" @click="handleLogin">
               登录
             </el-button>
           </el-form-item>

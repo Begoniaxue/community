@@ -34,9 +34,7 @@
             <h3 class="hot-title text-ellipsis-2">{{ post.title }}</h3>
             <div class="hot-meta">
               <span class="author">{{ post.author.nickname }}</span>
-              <span class="hot-value">
-                🔥 {{ formatNumber(post.viewsCount) }} 热度
-              </span>
+              <span class="hot-value"> 🔥 {{ formatNumber(post.viewsCount) }} 热度 </span>
               <span class="comments">{{ formatNumber(post.commentsCount) }} 评论</span>
             </div>
           </div>
@@ -48,22 +46,28 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { postApi } from '~/api/post'
-import type { Post } from '~/api/post'
+import type { Post } from '~/types'
 import { formatNumber } from '~/utils'
-
-const router = useRouter()
 
 const activeTab = ref('today')
 const loading = ref(false)
 const hotPosts = ref<Post[]>([])
 
+const extractArray = (data: any): Post[] => {
+  if (Array.isArray(data)) return data
+  if (data?.records && Array.isArray(data.records)) return data.records
+  if (data?.list && Array.isArray(data.list)) return data.list
+  return []
+}
+
 const fetchHotPosts = async () => {
   loading.value = true
   try {
     const response = await postApi.getHotList()
-    hotPosts.value = response.data?.slice(0, 20) || []
+    console.log('[热榜] fetchHotPosts 返回:', JSON.stringify(response, null, 2))
+    hotPosts.value = extractArray(response.data).slice(0, 20)
+    console.log('[热榜] 热门帖子数量:', hotPosts.value.length)
   } catch (error) {
     console.error('获取热榜失败:', error)
   } finally {
@@ -71,8 +75,8 @@ const fetchHotPosts = async () => {
   }
 }
 
-const navigateToPost = (postId: string) => {
-  router.push(`/post/${postId}`)
+const navigateToPost = (postId: number) => {
+  navigateTo(`/post/${postId}`)
 }
 
 watch(activeTab, () => {

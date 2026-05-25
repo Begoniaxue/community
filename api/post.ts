@@ -1,105 +1,72 @@
 import request from '~/utils/request'
-
-export interface Post {
-  id: string
-  title: string
-  content: string
-  images: string[]
-  categoryId: string
-  categoryName: string
-  topics: string[]
-  author: {
-    id: string
-    nickname: string
-    avatar: string
-  }
-  isTop: boolean
-  isHot: boolean
-  viewsCount: number
-  likesCount: number
-  commentsCount: number
-  collectionsCount: number
-  isLiked: boolean
-  isCollected: boolean
-  status: 'draft' | 'published' | 'reviewing' | 'rejected'
-  createdAt: string
-  updatedAt: string
-}
+import type { Post, Comment, Category, Topic, PageResult, ApiResponse } from '~/types'
 
 export interface CreatePostParams {
   title: string
   content: string
-  images: string[]
-  categoryId: string
-  topics: string[]
+  images?: string[]
+  categoryId?: number
+  topicIds?: number[]
 }
 
-export interface Comment {
-  id: string
-  content: string
-  user: {
-    id: string
-    nickname: string
-    avatar: string
-  }
-  postId: string
-  parentId: string | null
-  replyTo?: {
-    id: string
-    nickname: string
-  }
-  likesCount: number
-  replies: Comment[]
-  isLiked: boolean
-  createdAt: string
+export interface UpdatePostParams {
+  title?: string
+  content?: string
+  images?: string[]
+  categoryId?: number
+  topicIds?: number[]
 }
 
 export const postApi = {
   getList: (params: {
     page?: number
     pageSize?: number
-    categoryId?: string
+    categoryId?: number
     keyword?: string
     sort?: 'latest' | 'hot' | 'recommend'
-  }) => request.get('/posts', { params }),
+  }) => request.get<ApiResponse<PageResult<Post>>>('/posts', { params }),
 
-  getById: (id: string) => request.get<Post>(`/posts/${id}`),
+  getHotList: () => request.get<ApiResponse<Post[]>>('/posts/hot'),
 
-  create: (params: CreatePostParams) => request.post('/posts', params),
+  getTopList: () => request.get<ApiResponse<Post[]>>('/posts/top'),
 
-  update: (id: string, params: Partial<CreatePostParams>) => request.put(`/posts/${id}`, params),
+  getById: (id: number) => request.get<ApiResponse<Post>>(`/posts/${id}`),
 
-  delete: (id: string) => request.delete(`/posts/${id}`),
+  create: (params: CreatePostParams) => request.post<ApiResponse<Post>>('/posts', params),
 
-  like: (id: string) => request.post(`/posts/${id}/like`),
+  update: (id: number, params: UpdatePostParams) => request.put<ApiResponse<Post>>(`/posts/${id}`, params),
 
-  unlike: (id: string) => request.delete(`/posts/${id}/like`),
+  delete: (id: number) => request.delete<ApiResponse<void>>(`/posts/${id}`),
 
-  collect: (id: string) => request.post(`/posts/${id}/collect`),
+  like: (id: number) => request.post<ApiResponse<void>>(`/posts/${id}/like`),
 
-  uncollect: (id: string) => request.delete(`/posts/${id}/collect`),
+  unlike: (id: number) => request.delete<ApiResponse<void>>(`/posts/${id}/like`),
 
-  report: (id: string, reason: string) => request.post(`/posts/${id}/report`, { reason }),
+  collect: (id: number) => request.post<ApiResponse<void>>(`/posts/${id}/collect`),
 
-  getComments: (postId: string, page: number = 1, pageSize: number = 20) =>
-    request.get(`/posts/${postId}/comments`, { params: { page, pageSize } }),
+  uncollect: (id: number) => request.delete<ApiResponse<void>>(`/posts/${id}/collect`),
 
-  createComment: (postId: string, content: string, parentId?: string, replyToId?: string) =>
-    request.post(`/posts/${postId}/comments`, { content, parentId, replyToId }),
+  report: (id: number, reason: string) => request.post<ApiResponse<void>>(`/posts/${id}/report`, { reason }),
 
-  deleteComment: (commentId: string) => request.delete(`/comments/${commentId}`),
+  getComments: (postId: number, page: number = 1, pageSize: number = 20) =>
+    request.get<ApiResponse<PageResult<Comment>>>(`/posts/${postId}/comments`, { params: { page, pageSize } }),
 
-  likeComment: (commentId: string) => request.post(`/comments/${commentId}/like`),
+  createComment: (postId: number, content: string, parentId?: number, replyToId?: number) =>
+    request.post<ApiResponse<Comment>>(`/posts/${postId}/comments`, { content, parentId, replyToId }),
 
-  unlikeComment: (commentId: string) => request.delete(`/comments/${commentId}/like`),
+  deleteComment: (commentId: number) => request.delete<ApiResponse<void>>(`/comments/${commentId}`),
 
-  getCategories: () => request.get('/categories'),
+  likeComment: (commentId: number) => request.post<ApiResponse<void>>(`/comments/${commentId}/like`),
 
-  getTopics: () => request.get('/topics'),
+  unlikeComment: (commentId: number) => request.delete<ApiResponse<void>>(`/comments/${commentId}/like`),
 
-  getHotList: () => request.get('/posts/hot'),
+  getCategories: () => request.get<ApiResponse<Category[]>>('/categories'),
 
-  getTopList: () => request.get('/posts/top')
+  getTopics: () => request.get<ApiResponse<Topic[]>>('/topics'),
+
+  getHotTopics: () => request.get<ApiResponse<Topic[]>>('/topics/hot'),
+
+  uploadImage: (file: File) => request.upload<ApiResponse<{ url: string }>>('/upload/image', file)
 }
 
 export default postApi

@@ -47,27 +47,46 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { postApi } from '~/api/post'
-import type { Post } from '~/api/post'
+import type { Post } from '~/types'
 import { useUserStore } from '~/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
 
 const loading = ref(false)
-const categories = ref([
-  { id: '1', name: '技术', icon: '💻', description: '技术分享与讨论', postsCount: 1234 },
-  { id: '2', name: '生活', icon: '🏠', description: '生活日常分享', postsCount: 856 },
-  { id: '3', name: '娱乐', icon: '🎮', description: '娱乐八卦与游戏', postsCount: 678 },
-  { id: '4', name: '学习', icon: '📚', description: '学习交流与资料', postsCount: 445 },
-  { id: '5', name: '其他', icon: '📋', description: '其他类型内容', postsCount: 234 }
-])
+const categories = ref<{ id: number; name: string; icon?: string; description?: string; postsCount?: number }[]>([])
 const posts = ref<Post[]>([])
+
+const extractArray = <T>(data: any): T[] => {
+  if (Array.isArray(data)) return data
+  if (data?.records && Array.isArray(data.records)) return data.records
+  if (data?.list && Array.isArray(data.list)) return data.list
+  return []
+}
+
+const fetchCategories = async () => {
+  try {
+    const response = await postApi.getCategories()
+    console.log('[分类] fetchCategories 返回:', JSON.stringify(response, null, 2))
+    categories.value = (response.data || []) as { id: number; name: string; icon?: string; description?: string; postsCount?: number }[]
+  } catch (error) {
+    console.error('获取分类失败:', error)
+    categories.value = [
+      { id: 1, name: '技术' },
+      { id: 2, name: '生活' },
+      { id: 3, name: '娱乐' },
+      { id: 4, name: '学习' },
+      { id: 5, name: '其他' }
+    ]
+  }
+}
 
 const fetchPosts = async () => {
   loading.value = true
   try {
     const response = await postApi.getList({ page: 1, pageSize: 10 })
-    posts.value = response.data?.list || []
+    console.log('[分类] fetchPosts 返回:', JSON.stringify(response, null, 2))
+    posts.value = extractArray<Post>(response.data)
   } catch (error) {
     console.error('获取帖子列表失败:', error)
   } finally {
@@ -75,7 +94,7 @@ const fetchPosts = async () => {
   }
 }
 
-const navigateToCategory = (categoryId: string) => {
+const navigateToCategory = (categoryId: number) => {
   router.push(`/?category=${categoryId}`)
 }
 

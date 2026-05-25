@@ -1,24 +1,24 @@
 <template>
   <article class="post-card">
     <div class="post-header">
-      <NuxtLink :to="`/user/${post.author.id}`" class="author-info">
-        <el-avatar :src="post.author.avatar" :size="40" />
+      <NuxtLink :to="`/user/${post.author?.id}`" class="author-info">
+        <el-avatar :src="post.author?.avatar" :size="40" />
         <div class="author-meta">
-          <span class="author-name">{{ post.author.nickname }}</span>
-          <span class="post-time">{{ formatTime(post.createdAt) }}</span>
+          <span class="author-name">{{ post.author?.nickname || '匿名用户' }}</span>
+          <span class="post-time">{{ post.createdAt ? formatTime(post.createdAt) : '' }}</span>
         </div>
       </NuxtLink>
       <div class="post-tags">
         <el-tag v-if="post.isTop" type="danger" effect="light" size="small">置顶</el-tag>
         <el-tag v-if="post.isHot" type="warning" effect="light" size="small">热门</el-tag>
-        <el-tag size="small" type="info">{{ post.categoryName }}</el-tag>
+        <el-tag v-if="post.categoryName" size="small" type="info">{{ post.categoryName }}</el-tag>
       </div>
     </div>
 
     <NuxtLink :to="`/post/${post.id}`" class="post-content">
       <h3 class="post-title text-ellipsis-2">{{ post.title }}</h3>
       <p v-if="post.content" class="post-excerpt text-ellipsis-2">{{ stripHtml(post.content) }}</p>
-      <div v-if="post.images.length" class="post-images">
+      <div v-if="post.images && post.images.length" class="post-images">
         <img
           v-for="(img, index) in displayImages"
           :key="index"
@@ -32,7 +32,7 @@
     <div class="post-footer">
       <div class="topics">
         <NuxtLink
-          v-for="topic in post.topics.slice(0, 3)"
+          v-for="topic in (post.topics || []).slice(0, 3)"
           :key="topic"
           :to="`/topic/${topic}`"
           class="topic-tag"
@@ -43,15 +43,15 @@
       <div class="actions">
         <button class="action-btn" :class="{ active: post.isLiked }" @click.stop="handleLike">
           <el-icon><chat-line-round /></el-icon>
-          <span>{{ formatNumber(post.likesCount) }}</span>
+          <span>{{ post.likesCount ? formatNumber(post.likesCount) : 0 }}</span>
         </button>
         <NuxtLink :to="`/post/${post.id}`" class="action-btn">
           <el-icon><chat-dot-round /></el-icon>
-          <span>{{ formatNumber(post.commentsCount) }}</span>
+          <span>{{ post.commentsCount ? formatNumber(post.commentsCount) : 0 }}</span>
         </NuxtLink>
         <button class="action-btn" :class="{ active: post.isCollected }" @click.stop="handleCollect">
           <el-icon><star /></el-icon>
-          <span>{{ formatNumber(post.collectionsCount) }}</span>
+          <span>{{ post.collectionsCount ? formatNumber(post.collectionsCount) : 0 }}</span>
         </button>
         <el-dropdown @command="handleCommand">
           <button class="action-btn">
@@ -71,7 +71,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Post } from '~/api/post'
+import type { Post } from '~/types'
 import { formatTime, formatNumber } from '~/utils'
 
 const props = defineProps<{
@@ -83,7 +83,7 @@ const emit = defineEmits<{
   collect: [post: Post]
 }>()
 
-const displayImages = computed(() => props.post.images.slice(0, 3))
+const displayImages = computed(() => (props.post.images || []).slice(0, 3))
 
 const stripHtml = (html: string) => {
   return html.replace(/<[^>]+>/g, '')

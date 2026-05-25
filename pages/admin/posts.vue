@@ -29,7 +29,7 @@
     </el-card>
 
     <el-card class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe>
+      <el-table v-loading="loading" :data="tableData" stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="标题" min-width="200">
           <template #default="{ row }">
@@ -44,10 +44,7 @@
         <el-table-column prop="categoryName" label="分类" width="100" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag
-              :type="getStatusType(row.status)"
-              size="small"
-            >
+            <el-tag :type="getStatusType(row.status)" size="small">
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>

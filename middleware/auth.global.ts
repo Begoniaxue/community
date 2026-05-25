@@ -12,8 +12,23 @@ export default defineNuxtRouteMiddleware((to) => {
     userStore.initAuth()
   }
 
-  const publicPaths = ['/', '/login', '/register', '/forgot-password', '/categories', '/hot', '/search']
-  const adminPaths = ['/admin/dashboard', '/admin/posts', '/admin/users', '/admin/categories', '/admin/reports', '/admin/logs']
+  const publicPaths = [
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/categories',
+    '/hot',
+    '/search'
+  ]
+  const adminPaths = [
+    '/admin/dashboard',
+    '/admin/posts',
+    '/admin/users',
+    '/admin/categories',
+    '/admin/reports',
+    '/admin/logs'
+  ]
 
   const isAuthRequired =
     to.path.startsWith('/create') ||

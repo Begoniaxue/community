@@ -38,9 +38,9 @@
           <el-form-item>
             <el-button
               type="primary"
-              @click="handleRegister"
               :loading="loading"
               style="width: 100%"
+              @click="handleRegister"
             >
               注册
             </el-button>

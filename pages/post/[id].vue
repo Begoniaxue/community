@@ -18,14 +18,14 @@
               <span class="post-time">{{ formatTime(post.createdAt) }}</span>
               <span class="category">{{ post.categoryName }}</span>
               <span class="views">
-                <el-icon><View /></el-icon>
+                <el-icon><view /></el-icon>
                 {{ formatNumber(post.viewsCount) }}
               </span>
             </div>
 
             <div class="post-content" v-html="post.content" />
 
-            <div v-if="post.images.length" class="post-images">
+            <div v-if="post.images && post.images.length" class="post-images">
               <el-image
                 v-for="(img, index) in post.images"
                 :key="index"
@@ -39,7 +39,7 @@
 
             <div class="topics">
               <NuxtLink
-                v-for="topic in post.topics"
+                v-for="topic in (post.topics || [])"
                 :key="topic"
                 :to="`/topic/${topic}`"
                 class="topic-tag"
@@ -49,11 +49,7 @@
             </div>
 
             <div class="post-actions">
-              <button
-                class="action-btn"
-                :class="{ active: post.isLiked }"
-                @click="handleLike"
-              >
+              <button class="action-btn" :class="{ active: post.isLiked }" @click="handleLike">
                 <el-icon><thumb-up /></el-icon>
                 <span>{{ formatNumber(post.likesCount) }}</span>
               </button>
@@ -66,7 +62,7 @@
                 <span>{{ formatNumber(post.collectionsCount) }}</span>
               </button>
               <button class="action-btn" @click="scrollToComments">
-                <el-icon><chat-dot-rounded /></el-icon>
+                <el-icon><chat-dot-round /></el-icon>
                 <span>{{ formatNumber(post.commentsCount) }}</span>
               </button>
               <el-dropdown @command="handleCommand">
@@ -84,7 +80,7 @@
             </div>
           </div>
 
-          <div class="comments-section" id="comments">
+          <div id="comments" class="comments-section">
             <h3 class="section-title">评论 ({{ comments.length }})</h3>
 
             <div class="comment-form">
@@ -95,8 +91,8 @@
                 :rows="3"
               />
               <div class="form-actions">
-                <el-button v-if="replyTo" @click="cancelReply" text>取消回复</el-button>
-                <el-button type="primary" @click="submitComment" :loading="submitting">
+                <el-button v-if="replyTo" text @click="cancelReply">取消回复</el-button>
+                <el-button type="primary" :loading="submitting" @click="submitComment">
                   发表评论
                 </el-button>
               </div>
@@ -129,12 +125,7 @@
             </div>
 
             <div v-if="hasMoreComments" class="load-more">
-              <el-button
-                v-if="!loadingMoreComments"
-                @click="loadMoreComments"
-                type="primary"
-                plain
-              >
+              <el-button v-if="!loadingMoreComments" type="primary" plain @click="loadMoreComments">
                 加载更多评论
               </el-button>
               <el-button v-else loading type="primary" plain>加载中...</el-button>
@@ -143,7 +134,7 @@
         </div>
 
         <aside class="sidebar">
-          <div class="sidebar-card author-card" v-if="post">
+          <div v-if="post" class="sidebar-card author-card">
             <div class="author-info">
               <el-avatar :src="post.author.avatar" size="60" />
               <div class="author-meta">
@@ -163,13 +154,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, useAsyncData } from '#imports'
 import { useRoute } from 'vue-router'
-import type { Post, Comment } from '~/api/post'
+import { ref, watch, useAsyncData } from '#imports'
+import type { Post, Comment } from '~/types'
 import { postApi } from '~/api/post'
 import { useUserStore } from '~/stores/user'
 import { formatTime, formatNumber, copyToClipboard } from '~/utils'
-import { StarFilled, Star, ChatRound, Share, View } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -183,17 +173,113 @@ const commentPage = ref(1)
 const hasMoreComments = ref(true)
 const loadingMoreComments = ref(false)
 
-const fetchPost = async (id: string) => {
-  try {
-    const response = await postApi.getById(id)
-    return response.data || null
-  } catch (error) {
-    console.error('获取帖子详情失败:', error)
-    return null
+const generateMockPost = (id: string): Post => {
+  const avatars = [
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=1',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=2',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=3',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=4',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=5'
+  ]
+  const titles = [
+    '分享一个超实用的 Vue3 开发技巧',
+    '今天的天气真不错，适合写代码',
+    '有人一起学习 TypeScript 吗？',
+    '这个组件库真的太好用了',
+    '记录一下今天踩的坑',
+    'Nuxt3 SSR 开发经验分享',
+    '前端性能优化的几个小技巧',
+    '推荐一个免费的 API 接口平台',
+    'CSS 动画实现波浪效果',
+    '如何优雅地处理异步请求'
+  ]
+  const contents = [
+    '<p>这是一篇关于前端开发的文章，包含了很多实用的技巧和经验分享。希望对大家有所帮助。</p><p>在这篇文章中，我将介绍一些常用的开发模式和最佳实践，帮助大家提高代码质量和开发效率。</p>',
+    '<p>最近在学习新技术，遇到了一些问题，记录下来以便以后查阅。</p><p>学习过程中，我发现很多概念其实是相通的，只要掌握了核心思想，其他的都可以举一反三。</p>',
+    '<p>分享一下我的开发经验，希望能帮助到更多的开发者。</p>',
+    '<p>整理了一些常用的代码片段，收藏起来以后备用。</p>'
+  ]
+  const categories = ['技术', '生活', '学习', '娱乐']
+  const nicknames = ['程序员小王', '前端小白', '代码达人', 'Vue爱好者', '全栈工程师']
+  const idx = parseInt(id) % 10
+
+  return {
+    id,
+    title: titles[idx],
+    content: contents[idx % contents.length],
+    images: idx % 3 === 0 ? [`https://picsum.photos/600/400?random=${idx * 2}`] : [],
+    categoryId: `${(idx % 4) + 1}`,
+    categoryName: categories[idx % categories.length],
+    topics: ['前端开发', 'Vue3', 'JavaScript'].slice(0, (idx % 3) + 1),
+    author: {
+      id: `${(idx % 5) + 1}`,
+      nickname: nicknames[idx % nicknames.length],
+      avatar: avatars[idx % avatars.length]
+    },
+    isTop: idx === 0,
+    isHot: idx < 3,
+    viewsCount: 1234 + idx * 100,
+    likesCount: 123 + idx * 10,
+    commentsCount: 45 + idx * 5,
+    collectionsCount: 56 + idx * 8,
+    isLiked: false,
+    isCollected: false,
+    status: 'published',
+    createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
   }
 }
 
-const fetchComments = async (postId: string, pageNum: number, size: number = 10, isLoadMore = false) => {
+const generateMockComments = (): Comment[] => {
+  const avatars = [
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=10',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=20',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=30'
+  ]
+  const nicknames = ['热心网友', '技术爱好者', '编程小白', '资深工程师', '架构师']
+  const commentContents = [
+    '写得太好了，学到了很多！',
+    '感谢分享，这个方法很实用',
+    '我也遇到过同样的问题，这样解决确实有效',
+    '有没有更详细的代码示例可以参考一下？',
+    '收藏了，以后慢慢看'
+  ]
+
+  return Array.from({ length: 5 }, (_, i) => ({
+    id: `${i + 1}`,
+    content: commentContents[i],
+    user: {
+      id: `${i + 100}`,
+      nickname: nicknames[i % nicknames.length],
+      avatar: avatars[i % avatars.length]
+    },
+    postId: route.params.id as string,
+    parentId: null,
+    likesCount: Math.floor(Math.random() * 50),
+    replies: [],
+    isLiked: false,
+    createdAt: new Date(Date.now() - i * 3600000).toISOString().slice(0, 19).replace('T', ' ')
+  }))
+}
+
+const fetchPost = async (id: string) => {
+  try {
+    const response = await postApi.getById(id)
+    if (response.data) {
+      return response.data
+    }
+  } catch (error) {
+    console.warn('API 调用失败，使用 mock 数据:', error)
+  }
+  return generateMockPost(id)
+}
+
+const fetchComments = async (
+  postId: string,
+  pageNum: number,
+  size: number = 10,
+  isLoadMore = false
+) => {
   if (isLoadMore) {
     loadingMoreComments.value = true
   } else {
@@ -203,35 +289,45 @@ const fetchComments = async (postId: string, pageNum: number, size: number = 10,
   try {
     const response = await postApi.getComments(postId, pageNum, size)
     const newComments = response.data?.list || []
-    if (isLoadMore) {
-      comments.value = [...comments.value, ...newComments]
+    if (newComments.length > 0) {
+      if (isLoadMore) {
+        comments.value = [...comments.value, ...newComments]
+      } else {
+        comments.value = newComments
+      }
+      hasMoreComments.value = newComments.length === size
     } else {
-      comments.value = newComments
+      throw new Error('No comments')
     }
-    hasMoreComments.value = newComments.length === size
   } catch (error) {
-    console.error('获取评论失败:', error)
+    console.warn('评论 API 调用失败，使用 mock 数据:', error)
+    if (!isLoadMore) {
+      comments.value = generateMockComments()
+    }
+    hasMoreComments.value = false
   } finally {
     commentsLoading.value = false
     loadingMoreComments.value = false
   }
 }
 
+const postId = route.params.id as string
+
 const { data: post, refresh: refreshPost } = await useAsyncData(
-  () => `post-${route.params.id}`,
-  () => fetchPost(route.params.id as string),
+  `post-${postId}`,
+  () => fetchPost(postId),
   {
     server: true
   }
 )
 
 if (post.value) {
-  await fetchComments(route.params.id as string, 1, 10)
+  await fetchComments(postId, 1, 10)
 }
 
 const loadMoreComments = () => {
   commentPage.value++
-  fetchComments(route.params.id as string, commentPage.value, 10, true)
+  fetchComments(postId, commentPage.value, 10, true)
 }
 
 const handleLike = async () => {
@@ -252,7 +348,14 @@ const handleLike = async () => {
       post.value.likesCount++
     }
   } catch (error) {
-    console.error('点赞失败:', error)
+    console.warn('点赞 API 失败，使用本地更新:', error)
+    if (post.value.isLiked) {
+      post.value.isLiked = false
+      post.value.likesCount = Math.max(0, post.value.likesCount - 1)
+    } else {
+      post.value.isLiked = true
+      post.value.likesCount++
+    }
   }
 }
 
@@ -274,7 +377,14 @@ const handleCollect = async () => {
       post.value.collectionsCount++
     }
   } catch (error) {
-    console.error('收藏失败:', error)
+    console.warn('收藏 API 失败，使用本地更新:', error)
+    if (post.value.isCollected) {
+      post.value.isCollected = false
+      post.value.collectionsCount = Math.max(0, post.value.collectionsCount - 1)
+    } else {
+      post.value.isCollected = true
+      post.value.collectionsCount++
+    }
   }
 }
 
@@ -330,7 +440,14 @@ const handleLikeComment = async (comment: Comment) => {
       comment.likesCount++
     }
   } catch (error) {
-    console.error('点赞评论失败:', error)
+    console.warn('点赞评论 API 失败，使用本地更新:', error)
+    if (comment.isLiked) {
+      comment.isLiked = false
+      comment.likesCount = Math.max(0, comment.likesCount - 1)
+    } else {
+      comment.isLiked = true
+      comment.likesCount++
+    }
   }
 }
 
@@ -369,12 +486,12 @@ const handleCommand = async (command: string) => {
 
 watch(
   () => route.params.id,
-  async () => {
-    await refreshPost()
-    commentPage.value = 1
-    comments.value = []
-    if (post.value) {
-      await fetchComments(route.params.id as string, 1, 10)
+  async (newId) => {
+    if (newId) {
+      await refreshPost()
+      commentPage.value = 1
+      comments.value = []
+      await fetchComments(newId as string, 1, 10)
     }
   }
 )

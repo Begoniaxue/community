@@ -4,7 +4,7 @@
       <div class="notifications-card">
         <div class="page-header">
           <h2 class="page-title">消息中心</h2>
-          <el-button type="text" @click="handleMarkAllRead" :disabled="!hasUnread">
+          <el-button type="text" :disabled="!hasUnread" @click="handleMarkAllRead">
             全部已读
           </el-button>
         </div>
@@ -38,18 +38,20 @@
           >
             <div class="notification-icon">
               <el-icon v-if="notification.type === 'like'" size="24"><StarFilled /></el-icon>
-              <el-icon v-else-if="notification.type === 'comment'" size="24"><ChatDotRound /></el-icon>
+              <el-icon v-else-if="notification.type === 'comment'" size="24"
+                ><ChatDotRound
+              /></el-icon>
               <el-icon v-else-if="notification.type === 'follow'" size="24"><UserFilled /></el-icon>
               <el-icon v-else size="24"><Bell /></el-icon>
             </div>
             <div class="notification-content">
               <div class="notification-header">
                 <span v-if="notification.fromUser" class="from-user">
-                <el-avatar :src="notification.fromUser.avatar" size="24" />
-                <span>{{ notification.fromUser.nickname }}</span>
-              </span>
-              <span class="notification-time">{{ formatTime(notification.createdAt) }}</span>
-            </div>
+                  <el-avatar :src="notification.fromUser.avatar" size="24" />
+                  <span>{{ notification.fromUser.nickname }}</span>
+                </span>
+                <span class="notification-time">{{ formatTime(notification.createdAt) }}</span>
+              </div>
               <p class="notification-text">{{ notification.content }}</p>
               <NuxtLink
                 v-if="notification.postTitle"

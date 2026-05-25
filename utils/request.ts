@@ -6,7 +6,12 @@ const TOKEN_KEY = 'community_token'
 const pendingRequests = new Map<string, AbortController>()
 
 const getRequestKey = (config: AxiosRequestConfig): string => {
-  return [config.method, config.url, JSON.stringify(config.data), JSON.stringify(config.params)].join('&')
+  return [
+    config.method,
+    config.url,
+    JSON.stringify(config.data),
+    JSON.stringify(config.params)
+  ].join('&')
 }
 
 const addPendingRequest = (config: AxiosRequestConfig) => {
@@ -32,10 +37,7 @@ const removePendingRequest = (config: AxiosRequestConfig) => {
 }
 
 const getBaseUrl = (): string => {
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api'
-  }
-  return 'http://localhost:3001/api'
+  return 'http://localhost:8080/api/v1'
 }
 
 class Request {

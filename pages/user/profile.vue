@@ -109,7 +109,7 @@
                 v-for="item in followers"
                 :key="item.id"
                 :user="item"
-                :showFollow="true"
+                :show-follow="true"
                 @follow="handleFollow"
               />
             </div>
@@ -123,12 +123,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Post } from '~/api/post'
+import { Camera } from '@element-plus/icons-vue'
+import type { Post } from '~/types'
 import { postApi } from '~/api/post'
 import { userApi } from '~/api/user'
 import type { User } from '~/stores/user'
 import { useUserStore } from '~/stores/user'
-import { Camera } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -146,11 +146,20 @@ const followersLoading = ref(false)
 
 const user = computed(() => userStore.user)
 
+const extractArray = <T>(data: any): T[] => {
+  if (Array.isArray(data)) return data
+  if (data?.records && Array.isArray(data.records)) return data.records
+  if (data?.list && Array.isArray(data.list)) return data.list
+  return []
+}
+
 const fetchMyPosts = async () => {
   postsLoading.value = true
   try {
     const response = await userApi.getMyPosts(1, 20)
-    myPosts.value = response.data?.list || []
+    console.log('[个人中心] fetchMyPosts 返回:', JSON.stringify(response, null, 2))
+    myPosts.value = extractArray<Post>(response.data)
+    console.log('[个人中心] 我的帖子数量:', myPosts.value.length)
   } catch (error) {
     console.error('获取我的帖子失败:', error)
   } finally {
@@ -162,7 +171,9 @@ const fetchMyCollections = async () => {
   collectionsLoading.value = true
   try {
     const response = await userApi.getMyCollections(1, 20)
-    myCollections.value = response.data?.list || []
+    console.log('[个人中心] fetchMyCollections 返回:', JSON.stringify(response, null, 2))
+    myCollections.value = extractArray<Post>(response.data)
+    console.log('[个人中心] 我的收藏数量:', myCollections.value.length)
   } catch (error) {
     console.error('获取我的收藏失败:', error)
   } finally {
@@ -175,7 +186,9 @@ const fetchFollowing = async () => {
   followingLoading.value = true
   try {
     const response = await userApi.getFollowing(user.value.id, 1, 20)
-    following.value = response.data?.list || []
+    console.log('[个人中心] fetchFollowing 返回:', JSON.stringify(response, null, 2))
+    following.value = extractArray<User>(response.data)
+    console.log('[个人中心] 关注数量:', following.value.length)
   } catch (error) {
     console.error('获取关注列表失败:', error)
   } finally {
@@ -188,7 +201,9 @@ const fetchFollowers = async () => {
   followersLoading.value = true
   try {
     const response = await userApi.getFollowers(user.value.id, 1, 20)
-    followers.value = response.data?.list || []
+    console.log('[个人中心] fetchFollowers 返回:', JSON.stringify(response, null, 2))
+    followers.value = extractArray<User>(response.data)
+    console.log('[个人中心] 粉丝数量:', followers.value.length)
   } catch (error) {
     console.error('获取粉丝列表失败:', error)
   } finally {
@@ -262,7 +277,7 @@ const handleCollect = async (post: Post) => {
   }
 }
 
-const handleFollow = async (userId: string) => {
+const handleFollow = async (userId: number) => {
   try {
     await userApi.followUser(userId)
     ElMessage.success('关注成功')
@@ -271,7 +286,7 @@ const handleFollow = async (userId: string) => {
   }
 }
 
-const handleUnfollow = async (userId: string) => {
+const handleUnfollow = async (userId: number) => {
   try {
     await userApi.unfollowUser(userId)
     following.value = following.value.filter((u) => u.id !== userId)

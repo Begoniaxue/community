@@ -29,24 +29,24 @@
 </template>
 
 <script setup lang="ts">
-import type { User } from '~/stores/user'
+import type { User } from '~/types'
 
-defineProps<{
+const props = defineProps<{
   user: User
   showFollow?: boolean
 }>()
 
 const emit = defineEmits<{
-  follow: [userId: string]
-  unfollow: [userId: string]
+  follow: [userId: number]
+  unfollow: [userId: number]
 }>()
 
 const handleFollow = () => {
-  emit('follow', (props as any).user.id)
+  emit('follow', props.user.id)
 }
 
 const handleUnfollow = () => {
-  emit('unfollow', (props as any).user.id)
+  emit('unfollow', props.user.id)
 }
 </script>
 

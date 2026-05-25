@@ -39,7 +39,7 @@
     </el-card>
 
     <el-card class="table-card">
-      <el-table :data="tableData" v-loading="loading" stripe>
+      <el-table v-loading="loading" :data="tableData" stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="action" label="操作类型" width="120">
           <template #default="{ row }">
@@ -51,7 +51,12 @@
         <el-table-column prop="description" label="操作描述" min-width="250" />
         <el-table-column prop="adminName" label="操作人" width="120" />
         <el-table-column prop="ip" label="IP地址" width="140" />
-        <el-table-column prop="userAgent" label="浏览器信息" min-width="200" show-overflow-tooltip />
+        <el-table-column
+          prop="userAgent"
+          label="浏览器信息"
+          min-width="200"
+          show-overflow-tooltip
+        />
         <el-table-column prop="createdAt" label="操作时间" width="180" />
       </el-table>
 
@@ -154,7 +159,9 @@ const generateMockData = () => {
       ip: `192.168.1.${Math.floor(Math.random() * 255)}`,
       userAgent: 'Chrome 120.0.0.0 (Mac OS X 10_15_7)',
       createdAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000)
-        .toISOString().slice(0, 19).replace('T', ' ')
+        .toISOString()
+        .slice(0, 19)
+        .replace('T', ' ')
     })
   }
   return data

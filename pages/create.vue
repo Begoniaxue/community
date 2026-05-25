@@ -5,7 +5,12 @@
         <h2 class="page-title">发布内容</h2>
         <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
           <el-form-item label="标题" prop="title">
-            <el-input v-model="form.title" placeholder="请输入标题" maxlength="100" show-word-limit />
+            <el-input
+              v-model="form.title"
+              placeholder="请输入标题"
+              maxlength="100"
+              show-word-limit
+            />
           </el-form-item>
 
           <el-form-item label="分类" prop="categoryId">
@@ -60,12 +65,8 @@
           </el-form-item>
 
           <el-form-item>
-            <el-button type="primary" @click="handleSubmit" :loading="submitting">
-              发布
-            </el-button>
-            <el-button @click="handleSaveDraft" :loading="saving">
-              保存草稿
-            </el-button>
+            <el-button type="primary" :loading="submitting" @click="handleSubmit"> 发布 </el-button>
+            <el-button :loading="saving" @click="handleSaveDraft"> 保存草稿 </el-button>
             <el-button @click="handleReset">重置</el-button>
           </el-form-item>
         </el-form>
@@ -78,9 +79,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { FormInstance, FormRules, UploadFile, UploadFiles } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { postApi } from '~/api/post'
 import { useUserStore } from '~/stores/user'
-import { Plus } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -88,14 +89,14 @@ const userStore = useUserStore()
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
 const saving = ref(false)
-const categories = ref<{ id: string; name: string }[]>([])
+const categories = ref<{ id: number; name: string }[]>([])
 const hotTopics = ref<string[]>([])
 const fileList = ref<UploadFile[]>([])
 
 const form = reactive({
   title: '',
-  categoryId: '',
-  topics: [] as string[],
+  categoryId: undefined as number | undefined,
+  topicIds: [] as number[],
   content: ''
 })
 
@@ -108,18 +109,26 @@ const rules: FormRules = {
   content: [{ required: true, message: '请输入内容', trigger: 'blur' }]
 }
 
+const extractArray = <T>(data: any): T[] => {
+  if (Array.isArray(data)) return data
+  if (data?.records && Array.isArray(data.records)) return data.records
+  if (data?.list && Array.isArray(data.list)) return data.list
+  return []
+}
+
 const fetchCategories = async () => {
   try {
     const response = await postApi.getCategories()
-    categories.value = response.data || []
+    console.log('[发布页] fetchCategories 返回:', JSON.stringify(response, null, 2))
+    categories.value = extractArray<{ id: number; name: string }>(response.data)
   } catch (error) {
     console.error('获取分类失败:', error)
     categories.value = [
-      { id: '1', name: '技术' },
-      { id: '2', name: '生活' },
-      { id: '3', name: '娱乐' },
-      { id: '4', name: '学习' },
-      { id: '5', name: '其他' }
+      { id: 1, name: '技术' },
+      { id: 2, name: '生活' },
+      { id: 3, name: '娱乐' },
+      { id: 4, name: '学习' },
+      { id: 5, name: '其他' }
     ]
   }
 }
@@ -127,7 +136,9 @@ const fetchCategories = async () => {
 const fetchTopics = async () => {
   try {
     const response = await postApi.getTopics()
-    hotTopics.value = response.data?.slice(0, 10) || []
+    console.log('[发布页] fetchTopics 返回:', JSON.stringify(response, null, 2))
+    const topics = extractArray<{ id: number; name: string }>(response.data)
+    hotTopics.value = topics.map((t: any) => t.name || t).slice(0, 10)
   } catch (error) {
     console.error('获取话题失败:', error)
     hotTopics.value = ['Vue3', '前端开发', 'JavaScript', '技术分享', '生活日常']
@@ -154,17 +165,25 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     submitting.value = true
 
-    const images = fileList.value
-      .filter((f) => f.status === 'ready' || f.status === 'success')
-      .map((f) => f.url || '')
-      .filter(Boolean)
+    const uploadFiles = fileList.value
+      .filter((f) => f.raw instanceof File)
+      .map((f) => f.raw as File)
+
+    let images: string[] = []
+    if (uploadFiles.length > 0) {
+      const uploadPromises = uploadFiles.map((file) =>
+        postApi.uploadImage(file).then((res) => res.data?.url || '').catch(() => '')
+      )
+      const results = await Promise.all(uploadPromises)
+      images = results.filter(Boolean)
+    }
 
     await postApi.create({
       title: form.title,
       content: form.content,
       images,
       categoryId: form.categoryId,
-      topics: form.topics
+      topicIds: form.topicIds
     })
 
     ElMessage.success('发布成功')
@@ -194,8 +213,8 @@ const handleSaveDraft = async () => {
 
 const handleReset = () => {
   form.title = ''
-  form.categoryId = ''
-  form.topics = []
+  form.categoryId = undefined
+  form.topicIds = []
   form.content = ''
   fileList.value = []
   formRef.value?.resetFields()

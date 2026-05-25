@@ -173,7 +173,7 @@ cp .env.example .env
 
 环境变量说明：
 ```
-NUXT_PUBLIC_API_BASE_URL=http://localhost:3001/api  # API 地址
+BACKEND_API_URL=http://localhost:3001/api          # 后端 API 地址（服务端私有，不会暴露给客户端）
 NUXT_PUBLIC_WS_URL=ws://localhost:3001/ws          # WebSocket 地址
 ```
 

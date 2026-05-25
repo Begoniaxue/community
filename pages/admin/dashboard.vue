@@ -120,8 +120,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
-import { adminApi } from '~/api/admin'
 import { User, Document, ChatRound, UserFilled } from '@element-plus/icons-vue'
+import { adminApi } from '~/api/admin'
 
 const userTrendChartRef = ref<HTMLElement>()
 const categoryPieChartRef = ref<HTMLElement>()
